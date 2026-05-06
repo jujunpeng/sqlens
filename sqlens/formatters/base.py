@@ -27,3 +27,21 @@ class BaseFormatter(ABC):
         if value >= 1_000:
             return f"{value / 1_000:.2f}k"
         return f"{value:.2f}"
+
+    def _format_rows(self, rows: int) -> str:
+        """Return a compact, human-readable row-count string.
+
+        Examples
+        --------
+        >>> self._format_rows(500)
+        '500'
+        >>> self._format_rows(12_500)
+        '12.50k'
+        >>> self._format_rows(3_200_000)
+        '3.20M'
+        """
+        if rows >= 1_000_000:
+            return f"{rows / 1_000_000:.2f}M"
+        if rows >= 1_000:
+            return f"{rows / 1_000:.2f}k"
+        return str(rows)
