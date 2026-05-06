@@ -1,31 +1,36 @@
 from sqlens.formatters.tree import TreeFormatter
 from sqlens.formatters.summary import SummaryFormatter
 from sqlens.formatters.json_fmt import JsonFormatter
+from sqlens.formatters.flamegraph import FlamegraphFormatter
+from sqlens.formatters.stats import StatsFormatter
+from sqlens.formatters.timeline import TimelineFormatter
 
 _FORMATTERS = {
     "tree": TreeFormatter,
     "summary": SummaryFormatter,
     "json": JsonFormatter,
+    "flamegraph": FlamegraphFormatter,
+    "stats": StatsFormatter,
+    "timeline": TimelineFormatter,
 }
 
-DEFAULT_FORMAT = "tree"
 
-
-def get_formatter(fmt: str = DEFAULT_FORMAT):
-    """Return an instantiated formatter for the given format name.
+def get_formatter(name: str):
+    """Return a formatter instance by name.
 
     Args:
-        fmt: One of 'tree', 'summary', or 'json'. Defaults to 'tree'.
+        name: One of 'tree', 'summary', 'json', 'flamegraph', 'stats', 'timeline'.
 
     Returns:
-        An instance of the appropriate formatter.
+        An instance of the corresponding formatter.
 
     Raises:
-        ValueError: If the format name is not recognised.
+        ValueError: If the name is not recognised.
     """
-    key = fmt.lower()
+    key = name.lower()
     if key not in _FORMATTERS:
+        available = ", ".join(sorted(_FORMATTERS))
         raise ValueError(
-            f"Unknown format '{fmt}'. Choose from: {', '.join(_FORMATTERS)}"
+            f"Unknown formatter '{name}'. Available: {available}"
         )
     return _FORMATTERS[key]()
