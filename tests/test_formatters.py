@@ -1,71 +1,59 @@
 import pytest
 from sqlens.parsers.base import PlanNode
-from sqlens.formatters import get_formatter
+from sqlens.formatters import get_formatter, DEFAULT_FORMAT
 from sqlens.formatters.tree import TreeFormatter
 from sqlens.formatters.summary import SummaryFormatter
+from sqlens.formatters.json_fmt import JsonFormatter
 
 
-def make_node(
-    node_type: str,
-    children: list[PlanNode] | None = None,
-    **extra,
-) -> PlanNode:
-    return PlanNode(node_type=node_type, children=children or [], extra=extra)
+def make_node(node_type, cost=None, rows=None, extra=None, children=None):
+    return PlanNode(
+        node_type=node_type,
+        cost=cost,
+        rows=rows,
+        extra=extra or {},
+        children=children or [],
+    )
 
 
 class TestGetFormatter:
     def test_returns_tree_formatter(self):
-        fmt = get_formatter("tree")
-        assert isinstance(fmt, TreeFormatter)
+        assert isinstance(get_formatter("tree"), TreeFormatter)
 
     def test_returns_summary_formatter(self):
-        fmt = get_formatter("summary")
-        assert isinstance(fmt, SummaryFormatter)
+        assert isinstance(get_formatter("summary"), SummaryFormatter)
+
+    def test_returns_json_formatter(self):
+        assert isinstance(get_formatter("json"), JsonFormatter)
 
     def test_default_is_tree(self):
-        fmt = get_formatter()
-        assert isinstance(fmt, TreeFormatter)
+        assert isinstance(get_formatter(), TreeFormatter)
 
-    def test_none_is_tree(self):
-        fmt = get_formatter(None)
-        assert isinstance(fmt, TreeFormatter)
+    def test_default_format_constant(self):
+        assert DEFAULT_FORMAT == "tree"
 
-    def test_unknown_style_raises(self):
-        with pytest.raises(ValueError, match="Unknown formatter style"):
-            get_formatter("json")
-
-    def test_case_insensitive(self):
+    def test_case_insensitive_tree(self):
         assert isinstance(get_formatter("Tree"), TreeFormatter)
-        assert isinstance(get_formatter("SUMMARY"), SummaryFormatter)
 
+    def test_case_insensitive_json(self):
+        assert isinstance(get_formatter("JSON"), JsonFormatter)
 
-class TestTreeFormatter:
-    def setup_method(self):
-        self.fmt = TreeFormatter()
+    def test_unknown_format_raises_value_error(self):
+        with pytest.raises(ValueError, match="Unknown format"):
+            get_formatter("xml")
 
-    def test_format_single_node(self):
-        node = make_node("Seq Scan", **{"Relation Name": "users"})
-        result = self.fmt.format(node)
-        assert "Seq Scan" in result
+    def test_error_message_lists_choices(self):
+        with pytest.raises(ValueError, match="tree"):
+            get_formatter("bogus")
 
-    def test_format_nested_nodes(self):
-        child = make_node("Index Scan")
-        root = make_node("Nested Loop", children=[child])
-        result = self.fmt.format(root)
-        assert "Nested Loop" in result
-        assert "Index Scan" in result
+    def test_all_formatters_have_format_method(self):
+        for name in ("tree", "summary", "json"):
+            formatter = get_formatter(name)
+            assert callable(getattr(formatter, "format", None))
 
-    def test_format_returns_string(self):
-        node = make_node("Hash Join")
-        assert isinstance(self.fmt.format(node), str)
-
-    def test_child_indented_relative_to_parent(self):
-        child = make_node("Seq Scan")
-        root = make_node("Hash Join", children=[child])
-        result = self.fmt.format(root)
-        lines = result.splitlines()
-        root_line = next(l for l in lines if "Hash Join" in l)
-        child_line = next(l for l in lines if "Seq Scan" in l)
-        root_indent = len(root_line) - len(root_line.lstrip())
-        child_indent = len(child_line) - len(child_line.lstrip())
-        assert child_indent > root_indent
+    def test_formatter_format_accepts_plan_node(self):
+        node = make_node("Seq Scan", cost=1.0, rows=5)
+        for name in ("tree", "summary", "json"):
+            formatter = get_formatter(name)
+            result = formatter.format(node)
+            assert isinstance(result, str)

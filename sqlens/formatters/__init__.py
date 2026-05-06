@@ -1,26 +1,31 @@
 from sqlens.formatters.tree import TreeFormatter
 from sqlens.formatters.summary import SummaryFormatter
-from sqlens.formatters.base import BaseFormatter
+from sqlens.formatters.json_fmt import JsonFormatter
 
-_FORMATTERS: dict[str, type[BaseFormatter]] = {
+_FORMATTERS = {
     "tree": TreeFormatter,
     "summary": SummaryFormatter,
+    "json": JsonFormatter,
 }
 
-_DEFAULT = "tree"
+DEFAULT_FORMAT = "tree"
 
 
-def get_formatter(style: str | None = None) -> BaseFormatter:
-    """Return a formatter instance for the given style name.
+def get_formatter(fmt: str = DEFAULT_FORMAT):
+    """Return an instantiated formatter for the given format name.
 
     Args:
-        style: One of 'tree' or 'summary'. Defaults to 'tree'.
+        fmt: One of 'tree', 'summary', or 'json'. Defaults to 'tree'.
+
+    Returns:
+        An instance of the appropriate formatter.
 
     Raises:
-        ValueError: If *style* is not a known formatter name.
+        ValueError: If the format name is not recognised.
     """
-    key = (style or _DEFAULT).lower()
+    key = fmt.lower()
     if key not in _FORMATTERS:
-        known = ", ".join(sorted(_FORMATTERS))
-        raise ValueError(f"Unknown formatter style '{style}'. Known styles: {known}")
+        raise ValueError(
+            f"Unknown format '{fmt}'. Choose from: {', '.join(_FORMATTERS)}"
+        )
     return _FORMATTERS[key]()
