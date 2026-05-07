@@ -1,3 +1,6 @@
+"""Formatter registry — maps format names to formatter classes."""
+from __future__ import annotations
+
 from sqlens.formatters.tree import TreeFormatter
 from sqlens.formatters.summary import SummaryFormatter
 from sqlens.formatters.json_fmt import JsonFormatter
@@ -15,8 +18,9 @@ from sqlens.formatters.yaml_fmt import YamlFormatter
 from sqlens.formatters.table import TableFormatter
 from sqlens.formatters.outline import OutlineFormatter
 from sqlens.formatters.indent import IndentFormatter
+from sqlens.formatters.color import ColorFormatter
 
-_FORMATTERS = {
+_REGISTRY: dict[str, type] = {
     "tree": TreeFormatter,
     "summary": SummaryFormatter,
     "json": JsonFormatter,
@@ -34,19 +38,19 @@ _FORMATTERS = {
     "table": TableFormatter,
     "outline": OutlineFormatter,
     "indent": IndentFormatter,
+    "color": ColorFormatter,
 }
 
 
 def get_formatter(name: str):
-    """Return a formatter instance by name."""
-    key = name.lower()
-    if key not in _FORMATTERS:
-        raise ValueError(
-            f"Unknown formatter '{name}'. Available: {', '.join(_FORMATTERS)}"
-        )
-    return _FORMATTERS[key]()
+    """Return an instantiated formatter for *name*, or raise ValueError."""
+    key = name.lower().strip()
+    if key not in _REGISTRY:
+        available = ", ".join(sorted(_REGISTRY))
+        raise ValueError(f"Unknown formatter {name!r}. Available: {available}")
+    return _REGISTRY[key]()
 
 
-def list_formatters() -> list:
-    """Return a sorted list of available formatter names."""
-    return sorted(_FORMATTERS.keys())
+def list_formatters() -> list[str]:
+    """Return sorted list of registered formatter names."""
+    return sorted(_REGISTRY.keys())
