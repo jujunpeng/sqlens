@@ -1,3 +1,5 @@
+"""Formatter registry for sqlens."""
+
 from sqlens.formatters.tree import TreeFormatter
 from sqlens.formatters.summary import SummaryFormatter
 from sqlens.formatters.json_fmt import JsonFormatter
@@ -10,6 +12,7 @@ from sqlens.formatters.mermaid import MermaidFormatter
 from sqlens.formatters.csv import CsvFormatter
 from sqlens.formatters.html import HtmlFormatter
 from sqlens.formatters.text import TextFormatter
+from sqlens.formatters.compact import CompactFormatter
 
 _FORMATTERS = {
     "tree": TreeFormatter,
@@ -24,31 +27,24 @@ _FORMATTERS = {
     "csv": CsvFormatter,
     "html": HtmlFormatter,
     "text": TextFormatter,
+    "compact": CompactFormatter,
 }
 
 
-def get_formatter(fmt: str):
-    """Return a formatter instance for the given format name.
+def get_formatter(name: str):
+    """Return an instantiated formatter by name.
 
-    Args:
-        fmt: One of 'tree', 'summary', 'json', 'flamegraph', 'stats',
-             'timeline', 'dot', 'markdown', 'mermaid', 'csv', 'html', 'text'.
-
-    Returns:
-        An instance of the corresponding formatter.
-
-    Raises:
-        ValueError: If the format name is not recognised.
+    Raises ValueError for unknown formatter names.
     """
-    key = fmt.lower().strip()
+    key = name.lower()
     if key not in _FORMATTERS:
-        supported = ", ".join(sorted(_FORMATTERS))
+        available = ", ".join(sorted(_FORMATTERS))
         raise ValueError(
-            f"Unknown formatter '{fmt}'. Supported formats: {supported}"
+            f"Unknown formatter '{name}'. Available formatters: {available}"
         )
     return _FORMATTERS[key]()
 
 
 def list_formatters() -> list:
-    """Return a sorted list of supported formatter names."""
+    """Return sorted list of available formatter names."""
     return sorted(_FORMATTERS.keys())
