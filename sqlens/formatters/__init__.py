@@ -13,6 +13,7 @@ from sqlens.formatters.text import TextFormatter
 from sqlens.formatters.compact import CompactFormatter
 from sqlens.formatters.yaml_fmt import YamlFormatter
 from sqlens.formatters.table import TableFormatter
+from sqlens.formatters.outline import OutlineFormatter
 
 _FORMATTERS = {
     "tree": TreeFormatter,
@@ -30,18 +31,21 @@ _FORMATTERS = {
     "compact": CompactFormatter,
     "yaml": YamlFormatter,
     "table": TableFormatter,
+    "outline": OutlineFormatter,
 }
 
 
 def get_formatter(name: str):
-    """Return a formatter instance by name."""
+    """Return an instantiated formatter for *name*, or raise ValueError."""
     key = name.lower()
     if key not in _FORMATTERS:
         available = ", ".join(sorted(_FORMATTERS))
-        raise ValueError(f"Unknown formatter '{name}'. Available: {available}")
+        raise ValueError(
+            f"Unknown formatter '{name}'. Available: {available}"
+        )
     return _FORMATTERS[key]()
 
 
-def list_formatters() -> list:
+def list_formatters() -> list[str]:
     """Return sorted list of available formatter names."""
     return sorted(_FORMATTERS.keys())
