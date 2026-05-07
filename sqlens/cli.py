@@ -1,79 +1,104 @@
-"""CLI entry point for sqlens."""
+from __future__ import annotations
 
-import sys
-import json
 import argparse
+import json
+import sys
+from pathlib import Path
 
 from sqlens.parsers import get_parser
 from sqlens.formatters import get_formatter
 
+FORMATTERS = [
+    "tree",
+    "summary",
+    "json",
+    "flamegraph",
+    "stats",
+    "timeline",
+    "dot",
+    "markdown",
+    "mermaid",
+    "csv",
+    "html",
+]
+
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
+    p = argparse.ArgumentParser(
         prog="sqlens",
         description="Parse and visualize PostgreSQL / MySQL query execution plans.",
     )
-    parser.add_argument(
-        "plan",
+    p.add_argument(
+        "file",
         nargs="?",
-        help="Path to a file containing the query plan (JSON). Reads from stdin if omitted.",
+        help="Path to a JSON file containing the query plan (reads stdin if omitted).",
     )
-    parser.add_argument(
+    p.add_argument(
         "-d",
         "--dialect",
         choices=["postgres", "mysql"],
         default="postgres",
         help="SQL dialect of the plan (default: postgres).",
     )
-    parser.add_argument(
+    p.add_argument(
         "-f",
         "--format",
-        dest="style",
+        choices=FORMATTERS,
         default="tree",
-        help="Output format style (default: tree).",
+        dest="formatter",
+        help="Output format (default: tree).",
     )
-    return parser
+    p.add_argument(
+        "-o",
+        "--output",
+        metavar="FILE",
+        help="Write output to FILE instead of stdout.",
+    )
+    return p
 
 
-def read_input(path: str | None) -> str:
-    if path:
-        with open(path, "r", encoding="utf-8") as fh:
-            return fh.read()
-    return sys.stdin.read()
+def read_input(file_arg: str | None) -> str:
+    if file_arg is None:
+        return sys.stdin.read()
+    path = Path(file_arg)
+    if not path.exists():
+        raise FileNotFoundError(f"File not found: {file_arg}")
+    return path.read_text(encoding="utf-8")
 
 
 def main(argv: list[str] | None = None) -> int:
-    arg_parser = build_parser()
-    args = arg_parser.parse_args(argv)
+    parser = build_parser()
+    args = parser.parse_args(argv)
 
     try:
-        raw = read_input(args.plan)
+        raw = read_input(args.file)
     except FileNotFoundError as exc:
-        print(f"sqlens: error: {exc}", file=sys.stderr)
+        print(f"error: {exc}", file=sys.stderr)
         return 1
 
     try:
         data = json.loads(raw)
     except json.JSONDecodeError as exc:
-        print(f"sqlens: error: invalid JSON — {exc}", file=sys.stderr)
+        print(f"error: invalid JSON — {exc}", file=sys.stderr)
         return 1
 
     try:
         plan_parser = get_parser(args.dialect)
         root = plan_parser.parse(data)
-    except (KeyError, ValueError) as exc:
-        print(f"sqlens: error: could not parse plan — {exc}", file=sys.stderr)
+    except Exception as exc:  # noqa: BLE001
+        print(f"error: could not parse plan — {exc}", file=sys.stderr)
         return 1
 
-    try:
-        formatter = get_formatter(args.style)
-        print(formatter.format(root))
-    except ValueError as exc:
-        print(f"sqlens: error: {exc}", file=sys.stderr)
-        return 1
+    formatter = get_formatter(args.formatter)
+    output = formatter.format(root)
+
+    if args.output:
+        Path(args.output).write_text(output, encoding="utf-8")
+    else:
+        print(output)
 
     return 0
 
 
-if __name__ == "__main__":  # pragma: no cover
+if __name__ == "__main__":
     sys.exit(main())
