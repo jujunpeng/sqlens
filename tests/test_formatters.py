@@ -1,9 +1,11 @@
+"""Tests for formatter registry."""
 import pytest
 from sqlens.parsers.base import PlanNode
-from sqlens.formatters import get_formatter, DEFAULT_FORMAT
+from sqlens.formatters import get_formatter, list_formatters
 from sqlens.formatters.tree import TreeFormatter
 from sqlens.formatters.summary import SummaryFormatter
 from sqlens.formatters.json_fmt import JsonFormatter
+from sqlens.formatters.yaml_fmt import YamlFormatter
 
 
 def make_node(node_type, cost=None, rows=None, extra=None, children=None):
@@ -26,34 +28,35 @@ class TestGetFormatter:
     def test_returns_json_formatter(self):
         assert isinstance(get_formatter("json"), JsonFormatter)
 
-    def test_default_is_tree(self):
-        assert isinstance(get_formatter(), TreeFormatter)
+    def test_returns_yaml_formatter(self):
+        assert isinstance(get_formatter("yaml"), YamlFormatter)
 
-    def test_default_format_constant(self):
-        assert DEFAULT_FORMAT == "tree"
-
-    def test_case_insensitive_tree(self):
+    def test_case_insensitive(self):
+        assert isinstance(get_formatter("YAML"), YamlFormatter)
         assert isinstance(get_formatter("Tree"), TreeFormatter)
 
-    def test_case_insensitive_json(self):
-        assert isinstance(get_formatter("JSON"), JsonFormatter)
+    def test_raises_on_unknown_formatter(self):
+        with pytest.raises(ValueError, match="Unknown formatter"):
+            get_formatter("nonexistent")
 
-    def test_unknown_format_raises_value_error(self):
-        with pytest.raises(ValueError, match="Unknown format"):
-            get_formatter("xml")
-
-    def test_error_message_lists_choices(self):
-        with pytest.raises(ValueError, match="tree"):
+    def test_error_message_lists_available(self):
+        with pytest.raises(ValueError, match="yaml"):
             get_formatter("bogus")
 
-    def test_all_formatters_have_format_method(self):
-        for name in ("tree", "summary", "json"):
-            formatter = get_formatter(name)
-            assert callable(getattr(formatter, "format", None))
 
-    def test_formatter_format_accepts_plan_node(self):
-        node = make_node("Seq Scan", cost=1.0, rows=5)
-        for name in ("tree", "summary", "json"):
-            formatter = get_formatter(name)
-            result = formatter.format(node)
-            assert isinstance(result, str)
+class TestListFormatters:
+    def test_returns_list(self):
+        result = list_formatters()
+        assert isinstance(result, list)
+
+    def test_contains_expected_formatters(self):
+        result = list_formatters()
+        for name in ("tree", "summary", "json", "yaml", "dot", "markdown", "mermaid"):
+            assert name in result
+
+    def test_is_sorted(self):
+        result = list_formatters()
+        assert result == sorted(result)
+
+    def test_yaml_included(self):
+        assert "yaml" in list_formatters()
