@@ -1,6 +1,3 @@
-"""Formatter registry — maps format names to formatter classes."""
-from __future__ import annotations
-
 from sqlens.formatters.tree import TreeFormatter
 from sqlens.formatters.summary import SummaryFormatter
 from sqlens.formatters.json_fmt import JsonFormatter
@@ -19,6 +16,10 @@ from sqlens.formatters.table import TableFormatter
 from sqlens.formatters.outline import OutlineFormatter
 from sqlens.formatters.indent import IndentFormatter
 from sqlens.formatters.color import ColorFormatter
+from sqlens.formatters.sparkline import SparklineFormatter
+from sqlens.formatters.diff import DiffFormatter
+from sqlens.formatters.plantuml import PlantUMLFormatter
+from sqlens.formatters.ascii_art import AsciiArtFormatter
 
 _REGISTRY: dict[str, type] = {
     "tree": TreeFormatter,
@@ -39,15 +40,21 @@ _REGISTRY: dict[str, type] = {
     "outline": OutlineFormatter,
     "indent": IndentFormatter,
     "color": ColorFormatter,
+    "sparkline": SparklineFormatter,
+    "diff": DiffFormatter,
+    "plantuml": PlantUMLFormatter,
+    "ascii_art": AsciiArtFormatter,
 }
 
 
 def get_formatter(name: str):
-    """Return an instantiated formatter for *name*, or raise ValueError."""
-    key = name.lower().strip()
+    """Return an instantiated formatter by name, or raise ValueError."""
+    key = name.lower()
     if key not in _REGISTRY:
         available = ", ".join(sorted(_REGISTRY))
-        raise ValueError(f"Unknown formatter {name!r}. Available: {available}")
+        raise ValueError(
+            f"Unknown formatter '{name}'. Available formatters: {available}"
+        )
     return _REGISTRY[key]()
 
 
