@@ -1,3 +1,4 @@
+"""Formatter registry for sqlens."""
 from sqlens.formatters.tree import TreeFormatter
 from sqlens.formatters.summary import SummaryFormatter
 from sqlens.formatters.json_fmt import JsonFormatter
@@ -21,8 +22,9 @@ from sqlens.formatters.diff import DiffFormatter
 from sqlens.formatters.plantuml import PlantUMLFormatter
 from sqlens.formatters.ascii_art import AsciiArtFormatter
 from sqlens.formatters.heatmap import HeatmapFormatter
+from sqlens.formatters.sankey import SankeyFormatter
 
-_REGISTRY: dict[str, type] = {
+_REGISTRY = {
     "tree": TreeFormatter,
     "summary": SummaryFormatter,
     "json": JsonFormatter,
@@ -46,11 +48,12 @@ _REGISTRY: dict[str, type] = {
     "plantuml": PlantUMLFormatter,
     "ascii_art": AsciiArtFormatter,
     "heatmap": HeatmapFormatter,
+    "sankey": SankeyFormatter,
 }
 
 
 def get_formatter(name: str):
-    """Return a formatter instance by name."""
+    """Return an instantiated formatter by name."""
     key = name.lower()
     if key not in _REGISTRY:
         raise ValueError(
@@ -59,6 +62,6 @@ def get_formatter(name: str):
     return _REGISTRY[key]()
 
 
-def list_formatters() -> list[str]:
+def list_formatters() -> list:
     """Return sorted list of available formatter names."""
     return sorted(_REGISTRY.keys())
