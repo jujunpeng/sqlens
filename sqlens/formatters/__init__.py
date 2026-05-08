@@ -20,6 +20,7 @@ from sqlens.formatters.sparkline import SparklineFormatter
 from sqlens.formatters.diff import DiffFormatter
 from sqlens.formatters.plantuml import PlantUMLFormatter
 from sqlens.formatters.ascii_art import AsciiArtFormatter
+from sqlens.formatters.heatmap import HeatmapFormatter
 
 _REGISTRY: dict[str, type] = {
     "tree": TreeFormatter,
@@ -44,20 +45,20 @@ _REGISTRY: dict[str, type] = {
     "diff": DiffFormatter,
     "plantuml": PlantUMLFormatter,
     "ascii_art": AsciiArtFormatter,
+    "heatmap": HeatmapFormatter,
 }
 
 
 def get_formatter(name: str):
-    """Return an instantiated formatter by name, or raise ValueError."""
+    """Return a formatter instance by name."""
     key = name.lower()
     if key not in _REGISTRY:
-        available = ", ".join(sorted(_REGISTRY))
         raise ValueError(
-            f"Unknown formatter '{name}'. Available formatters: {available}"
+            f"Unknown formatter '{name}'. Available: {', '.join(sorted(_REGISTRY))}"
         )
     return _REGISTRY[key]()
 
 
 def list_formatters() -> list[str]:
-    """Return sorted list of registered formatter names."""
+    """Return sorted list of available formatter names."""
     return sorted(_REGISTRY.keys())
