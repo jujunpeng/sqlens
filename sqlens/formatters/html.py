@@ -35,11 +35,7 @@ class HtmlFormatter(BaseFormatter):
     def _render_node(self, node: PlanNode, depth: int) -> str:
         cost_str = self._format_cost(node.cost)
         rows_str = self._format_rows(node.rows)
-        label = (
-            f"<span class=\"node-type\">{node.node_type}</span>"
-            f" <span class=\"cost\">{cost_str}</span>"
-            f" <span class=\"rows\">{rows_str}</span>"
-        )
+        label = self._build_label(node.node_type, cost_str, rows_str)
         if is_leaf(node):
             return f"<details class=\"leaf\"><summary>{label}</summary></details>"
 
@@ -51,4 +47,12 @@ class HtmlFormatter(BaseFormatter):
             f"  <summary>{label}</summary>\n"
             f"  {children_html}\n"
             f"</details>"
+        )
+
+    def _build_label(self, node_type: str, cost_str: str, rows_str: str) -> str:
+        """Compose the HTML label shown in a node's summary element."""
+        return (
+            f"<span class=\"node-type\">{node_type}</span>"
+            f" <span class=\"cost\">{cost_str}</span>"
+            f" <span class=\"rows\">{rows_str}</span>"
         )
